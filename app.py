@@ -13,85 +13,68 @@ from groq import Groq
 # ==========================================
 st.set_page_config(page_title="GreenEconomy-AI", page_icon="\U0001F33F", layout="wide")
 
-# SVG daun dekoratif (pojok kanan atas), di-encode base64 supaya aman dipakai
-# sebagai CSS background-image di dalam f-string.
-LEAF_BG_B64 = "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNjAgMjYwIj4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0MCwtMTApIHJvdGF0ZSgxOCAxMzAgMTMwKSIgb3BhY2l0eT0iMC41NSI+CiAgICA8cGF0aCBkPSJNMTUwIDIwIEMyMDAgNDUgMjI1IDEwMCAyMDUgMTUwIEMxOTAgMTg4IDE1MCAyMDUgMTE1IDE5NSBDODUgMTg3IDY1IDE1NSA3MCAxMjAgQzc2IDc4IDExMCAzNSAxNTAgMjAgWiIgZmlsbD0iI0NGRTlENiIvPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMTMwIDcwIDExMCAxMjAgOTUgMTc1IiBzdHJva2U9IiM5RkNEQUUiIHN0cm9rZS13aWR0aD0iMi41IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMTggNzAgQzEyOCA3OCAxMzggODYgMTQ1IDk2IiBzdHJva2U9IiM5RkNEQUUiIHN0cm9rZS13aWR0aD0iMS42IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMDggMTEwIEMxMjAgMTE2IDEzMiAxMjIgMTQwIDEzMiIgc3Ryb2tlPSIjOUZDREFFIiBzdHJva2Utd2lkdGg9IjEuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNMTAwIDE1MCBDMTEyIDE1NCAxMjQgMTU4IDEzMiAxNjYiIHN0cm9rZT0iIzlGQ0RBRSIgc3Ryb2tlLXdpZHRoPSIxLjYiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTAsNDApIHJvdGF0ZSgtMTAgMTMwIDEzMCkgc2NhbGUoMC42MikiIG9wYWNpdHk9IjAuNzUiPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMjAwIDQ1IDIyNSAxMDAgMjA1IDE1MCBDMTkwIDE4OCAxNTAgMjA1IDExNSAxOTUgQzg1IDE4NyA2NSAxNTUgNzAgMTIwIEM3NiA3OCAxMTAgMzUgMTUwIDIwIFoiIGZpbGw9IiNBOUREQjgiLz4KICAgIDxwYXRoIGQ9Ik0xNTAgMjAgQzEzMCA3MCAxMTAgMTIwIDk1IDE3NSIgc3Ryb2tlPSIjNUZBRTc2IiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPHBhdGggZD0iTTExOCA3MCBDMTI4IDc4IDEzOCA4NiAxNDUgOTYiIHN0cm9rZT0iIzVGQUU3NiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMDggMTEwIEMxMjAgMTE2IDEzMiAxMjIgMTQwIDEzMiIgc3Ryb2tlPSIjNUZBRTc2IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsOTApIHJvdGF0ZSg0MCAxMzAgMTMwKSBzY2FsZSgwLjQpIiBvcGFjaXR5PSIwLjkiPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMjAwIDQ1IDIyNSAxMDAgMjA1IDE1MCBDMTkwIDE4OCAxNTAgMjA1IDExNSAxOTUgQzg1IDE4NyA2NSAxNTUgNzAgMTIwIEM3NiA3OCAxMTAgMzUgMTUwIDIwIFoiIGZpbGw9IiM1RkFFNzYiLz4KICAgIDxwYXRoIGQ9Ik0xNTAgMjAgQzEzMCA3MCAxMTAgMTIwIDk1IDE3NSIgc3Ryb2tlPSIjMkY3QTRBIiBzdHJva2Utd2lkdGg9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPC9nPgo8L3N2Zz4="
+# Catatan: warna utama (background, sidebar, teks, tombol) diatur lewat
+# .streamlit/config.toml supaya SEMUA komponen bawaan Streamlit (dropdown,
+# input angka, kotak chat, dsb) ikut tema hijau secara konsisten -- bukan
+# cuma elemen yang di-custom lewat CSS. Ini yang bikin tampilan sebelumnya
+# kelihatan belang (sebagian hijau terang, sebagian gelap bawaan browser).
 
 # ==========================================
-# 2. CSS -- IDENTITAS VISUAL "GREENECONOMY-AI"
+# 2. CSS -- SENTUHAN VISUAL "GREENECONOMY-AI"
 # ==========================================
-st.markdown(f"""
+st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap');
 
-    :root {{
-        --ge-canvas: #FAFAF7;
-        --ge-canvas-soft: #F1FAF4;
-        --ge-sage: #E8F4EC;
-        --ge-sage-border: #BFE3CC;
-        --ge-forest: #163C24;
+    :root {
+        --ge-forest: #15331F;
         --ge-leaf: #2E9B5C;
         --ge-leaf-deep: #1F7A47;
         --ge-sky: #2F8FBF;
-        --ge-ink-soft: #426350;
-    }}
+        --ge-card: #FFFFFF;
+        --ge-card-border: #BFE3CC;
+    }
 
     /* --- Elemen bawaan Streamlit --- */
-    #MainMenu {{visibility: visible;}}
-    footer {{visibility: hidden;}}
-    .stDeployButton {{display:none;}}
-    header[data-testid="stHeader"] {{ background-color: transparent; }}
-    div[data-testid="stDecoration"] {{ visibility: hidden; }}
+    #MainMenu {visibility: visible;}
+    footer {visibility: hidden;}
+    .stDeployButton {display:none;}
+    header[data-testid="stHeader"] { background-color: transparent; }
+    div[data-testid="stDecoration"] { visibility: hidden; }
 
-    /* --- Kanvas utama: hijau-putih bersih + daun di pojok kanan atas --- */
-    [data-testid="stAppViewContainer"] {{
-        background-image:
-            url("data:image/svg+xml;base64,{LEAF_BG_B64}"),
-            linear-gradient(165deg, var(--ge-canvas) 0%, var(--ge-canvas-soft) 45%, var(--ge-sage) 100%);
-        background-repeat: no-repeat, no-repeat;
-        background-position: top right, center;
-        background-size: 360px 360px, cover;
-        background-attachment: fixed, fixed;
-    }}
-
-    [data-testid="stSidebar"] {{
-        background: linear-gradient(180deg, #FFFFFF 0%, var(--ge-sage) 100%);
-        border-right: 1px solid var(--ge-sage-border);
-    }}
-
-    .block-container {{
+    .block-container {
         padding-top: 1.2rem !important;
         padding-bottom: 1rem !important;
-    }}
+    }
 
     /* --- Tipografi --- */
-    h1, h2, h3 {{
+    h1, h2, h3 {
         font-family: 'Fraunces', serif !important;
         color: var(--ge-forest) !important;
         letter-spacing: -0.01em;
-    }}
-    html, body, [class*="css"] {{
+    }
+    html, body, [class*="css"] {
         font-family: 'Manrope', sans-serif;
-    }}
+    }
 
-    /* --- Header / Logo "GreenEconomy-AI" --- */
-    .ge-header {{
+    /* --- Header / Logo "GreenEconomy-AI" (tanpa daun besar di pojok) --- */
+    .ge-header {
         display: flex;
         align-items: center;
         gap: 16px;
         padding: 4px 0 18px 0;
-        border-bottom: 1px solid var(--ge-sage-border);
+        border-bottom: 1px solid var(--ge-card-border);
         margin-bottom: 18px;
-    }}
-    .ge-logo-badge {{ flex-shrink: 0; }}
-    .ge-wordmark {{ display: flex; flex-direction: column; line-height: 1.15; }}
-    .ge-name {{
+    }
+    .ge-logo-badge { flex-shrink: 0; }
+    .ge-wordmark { display: flex; flex-direction: column; line-height: 1.15; }
+    .ge-name {
         font-family: 'Fraunces', serif;
         font-weight: 600;
         font-size: 1.75rem;
         color: var(--ge-forest);
-    }}
-    .ge-name .ge-ai-tag {{
+    }
+    .ge-name .ge-ai-tag {
         font-family: 'Manrope', sans-serif;
         font-weight: 700;
         font-size: 0.95rem;
@@ -102,18 +85,19 @@ st.markdown(f"""
         margin-left: 8px;
         vertical-align: middle;
         letter-spacing: 0.03em;
-    }}
-    .ge-tagline {{
+    }
+    .ge-tagline {
         font-family: 'Manrope', sans-serif;
         font-size: 0.82rem;
-        color: var(--ge-ink-soft);
+        color: var(--ge-forest);
+        opacity: 0.7;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         margin-top: 3px;
-    }}
+    }
 
-    /* --- Sidebar brand mark --- */
-    .ge-sidebar-brand {{
+    /* --- Brand mark mini di sidebar --- */
+    .ge-sidebar-brand {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -122,49 +106,49 @@ st.markdown(f"""
         font-size: 1.05rem;
         color: var(--ge-forest);
         margin-bottom: 2px;
-    }}
+    }
 
-    /* --- Kotak adaptif & info, retema hijau --- */
-    .adaptive-box {{
-        background-color: var(--ge-sage);
+    /* --- Kartu konten: putih solid supaya kontras & rapi di atas latar hijau --- */
+    .adaptive-box {
+        background-color: var(--ge-card);
         color: var(--ge-forest);
-        padding: 16px;
+        padding: 16px 18px;
         border-radius: 12px;
         border-left: 5px solid var(--ge-leaf);
         margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(22,60,36,0.06);
-    }}
-    .info-box {{
-        background-color: #FFFFFF;
-        padding: 14px;
+        box-shadow: 0 2px 10px rgba(21,51,31,0.08);
+    }
+    .info-box {
+        background-color: var(--ge-card);
+        padding: 14px 16px;
         border-radius: 12px;
-        border: 1px solid var(--ge-sage-border);
+        border: 1px solid var(--ge-card-border);
         border-left: 4px solid var(--ge-sky);
         margin-top: 15px;
         font-size: 0.9rem;
         color: var(--ge-forest);
-    }}
+    }
 
     /* --- Tombol utama --- */
-    .stButton > button[kind="primary"] {{
+    .stButton > button[kind="primary"] {
         background: linear-gradient(135deg, var(--ge-leaf), var(--ge-leaf-deep));
         border: none;
         border-radius: 10px;
         font-weight: 600;
-    }}
+    }
 
     /* --- Metric --- */
-    [data-testid="stMetricValue"] {{
+    [data-testid="stMetricValue"] {
         color: var(--ge-leaf-deep);
         font-family: 'Fraunces', serif;
-    }}
+    }
 
     /* --- Animasi --- */
-    .fade-in {{ animation: fadeIn 1.2s ease-in-out; }}
-    @keyframes fadeIn {{
-        from {{opacity: 0; transform: translateY(10px);}}
-        to {{opacity: 1; transform: translateY(0);}}
-    }}
+    .fade-in { animation: fadeIn 1.0s ease-in-out; }
+    @keyframes fadeIn {
+        from {opacity: 0; transform: translateY(8px);}
+        to {opacity: 1; transform: translateY(0);}
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -389,10 +373,10 @@ if st.session_state.prediction_state:
         fig.update_layout(
             showlegend=True,
             legend=dict(orientation="h", y=-0.1),
-            margin=dict(t=0, b=0, l=0, r=0),
+            margin=dict(t=10, b=0, l=0, r=0),
             height=280,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='#FFFFFF',
+            plot_bgcolor='#FFFFFF',
         )
         st.plotly_chart(fig, use_container_width=True)
 
