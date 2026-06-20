@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 import plotly.graph_objects as go
-import pickle  # <--- TAMBAHAN PENTING
+import pickle
 from xgboost import XGBRegressor
 from sklearn.preprocessing import StandardScaler
 from groq import Groq
@@ -11,62 +11,160 @@ from groq import Groq
 # ==========================================
 # 1. KONFIGURASI HALAMAN
 # ==========================================
-st.set_page_config(page_title="TIM BEJO", page_icon="🌿", layout="wide")
+st.set_page_config(page_title="GreenEconomy-AI", page_icon="\U0001F33F", layout="wide")
+
+# SVG daun dekoratif (pojok kanan atas), di-encode base64 supaya aman dipakai
+# sebagai CSS background-image di dalam f-string.
+LEAF_BG_B64 = "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNjAgMjYwIj4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSg0MCwtMTApIHJvdGF0ZSgxOCAxMzAgMTMwKSIgb3BhY2l0eT0iMC41NSI+CiAgICA8cGF0aCBkPSJNMTUwIDIwIEMyMDAgNDUgMjI1IDEwMCAyMDUgMTUwIEMxOTAgMTg4IDE1MCAyMDUgMTE1IDE5NSBDODUgMTg3IDY1IDE1NSA3MCAxMjAgQzc2IDc4IDExMCAzNSAxNTAgMjAgWiIgZmlsbD0iI0NGRTlENiIvPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMTMwIDcwIDExMCAxMjAgOTUgMTc1IiBzdHJva2U9IiM5RkNEQUUiIHN0cm9rZS13aWR0aD0iMi41IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMTggNzAgQzEyOCA3OCAxMzggODYgMTQ1IDk2IiBzdHJva2U9IiM5RkNEQUUiIHN0cm9rZS13aWR0aD0iMS42IiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMDggMTEwIEMxMjAgMTE2IDEzMiAxMjIgMTQwIDEzMiIgc3Ryb2tlPSIjOUZDREFFIiBzdHJva2Utd2lkdGg9IjEuNiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNMTAwIDE1MCBDMTEyIDE1NCAxMjQgMTU4IDEzMiAxNjYiIHN0cm9rZT0iIzlGQ0RBRSIgc3Ryb2tlLXdpZHRoPSIxLjYiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTAsNDApIHJvdGF0ZSgtMTAgMTMwIDEzMCkgc2NhbGUoMC42MikiIG9wYWNpdHk9IjAuNzUiPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMjAwIDQ1IDIyNSAxMDAgMjA1IDE1MCBDMTkwIDE4OCAxNTAgMjA1IDExNSAxOTUgQzg1IDE4NyA2NSAxNTUgNzAgMTIwIEM3NiA3OCAxMTAgMzUgMTUwIDIwIFoiIGZpbGw9IiNBOUREQjgiLz4KICAgIDxwYXRoIGQ9Ik0xNTAgMjAgQzEzMCA3MCAxMTAgMTIwIDk1IDE3NSIgc3Ryb2tlPSIjNUZBRTc2IiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogICAgPHBhdGggZD0iTTExOCA3MCBDMTI4IDc4IDEzOCA4NiAxNDUgOTYiIHN0cm9rZT0iIzVGQUU3NiIgc3Ryb2tlLXdpZHRoPSIyIiBmaWxsPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xMDggMTEwIEMxMjAgMTE2IDEzMiAxMjIgMTQwIDEzMiIgc3Ryb2tlPSIjNUZBRTc2IiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAsOTApIHJvdGF0ZSg0MCAxMzAgMTMwKSBzY2FsZSgwLjQpIiBvcGFjaXR5PSIwLjkiPgogICAgPHBhdGggZD0iTTE1MCAyMCBDMjAwIDQ1IDIyNSAxMDAgMjA1IDE1MCBDMTkwIDE4OCAxNTAgMjA1IDExNSAxOTUgQzg1IDE4NyA2NSAxNTUgNzAgMTIwIEM3NiA3OCAxMTAgMzUgMTUwIDIwIFoiIGZpbGw9IiM1RkFFNzYiLz4KICAgIDxwYXRoIGQ9Ik0xNTAgMjAgQzEzMCA3MCAxMTAgMTIwIDk1IDE3NSIgc3Ryb2tlPSIjMkY3QTRBIiBzdHJva2Utd2lkdGg9IjMuNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgPC9nPgo8L3N2Zz4="
 
 # ==========================================
-# 2. CSS "SAPU BERSIH" & TEMA ADAPTIF
+# 2. CSS -- IDENTITAS VISUAL "GREENECONOMY-AI"
 # ==========================================
-st.markdown("""
+st.markdown(f"""
 <style>
-    /* 1. ATUR ELEMENT BAWAAN STREAMLIT */
-    #MainMenu {visibility: visible;} 
-    footer {visibility: hidden;} 
-    
-    header[data-testid="stHeader"] {
-        background-color: transparent;
-    }
-    div[data-testid="stDecoration"] {
-        visibility: hidden;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap');
 
-    /* 2. ATUR PADDING */
-    .block-container {
-        padding-top: 2rem !important;
+    :root {{
+        --ge-canvas: #FAFAF7;
+        --ge-canvas-soft: #F1FAF4;
+        --ge-sage: #E8F4EC;
+        --ge-sage-border: #BFE3CC;
+        --ge-forest: #163C24;
+        --ge-leaf: #2E9B5C;
+        --ge-leaf-deep: #1F7A47;
+        --ge-sky: #2F8FBF;
+        --ge-ink-soft: #426350;
+    }}
+
+    /* --- Elemen bawaan Streamlit --- */
+    #MainMenu {{visibility: visible;}}
+    footer {{visibility: hidden;}}
+    .stDeployButton {{display:none;}}
+    header[data-testid="stHeader"] {{ background-color: transparent; }}
+    div[data-testid="stDecoration"] {{ visibility: hidden; }}
+
+    /* --- Kanvas utama: hijau-putih bersih + daun di pojok kanan atas --- */
+    [data-testid="stAppViewContainer"] {{
+        background-image:
+            url("data:image/svg+xml;base64,{LEAF_BG_B64}"),
+            linear-gradient(165deg, var(--ge-canvas) 0%, var(--ge-canvas-soft) 45%, var(--ge-sage) 100%);
+        background-repeat: no-repeat, no-repeat;
+        background-position: top right, center;
+        background-size: 360px 360px, cover;
+        background-attachment: fixed, fixed;
+    }}
+
+    [data-testid="stSidebar"] {{
+        background: linear-gradient(180deg, #FFFFFF 0%, var(--ge-sage) 100%);
+        border-right: 1px solid var(--ge-sage-border);
+    }}
+
+    .block-container {{
+        padding-top: 1.2rem !important;
         padding-bottom: 1rem !important;
-    }
+    }}
 
-    /* 3. SEMBUNYIKAN TOMBOL DEPLOY */
-    .stDeployButton {display:none;}
-    
-    /* 4. KOTAK ADAPTIF */
-    .adaptive-box {
-        background-color: var(--secondary-background-color); 
-        color: var(--text-color);
-        padding: 16px; 
-        border-radius: 10px; 
-        border-left: 5px solid #22c55e; 
+    /* --- Tipografi --- */
+    h1, h2, h3 {{
+        font-family: 'Fraunces', serif !important;
+        color: var(--ge-forest) !important;
+        letter-spacing: -0.01em;
+    }}
+    html, body, [class*="css"] {{
+        font-family: 'Manrope', sans-serif;
+    }}
+
+    /* --- Header / Logo "GreenEconomy-AI" --- */
+    .ge-header {{
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 4px 0 18px 0;
+        border-bottom: 1px solid var(--ge-sage-border);
+        margin-bottom: 18px;
+    }}
+    .ge-logo-badge {{ flex-shrink: 0; }}
+    .ge-wordmark {{ display: flex; flex-direction: column; line-height: 1.15; }}
+    .ge-name {{
+        font-family: 'Fraunces', serif;
+        font-weight: 600;
+        font-size: 1.75rem;
+        color: var(--ge-forest);
+    }}
+    .ge-name .ge-ai-tag {{
+        font-family: 'Manrope', sans-serif;
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: #FFFFFF;
+        background: linear-gradient(135deg, var(--ge-sky), #1F6F94);
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin-left: 8px;
+        vertical-align: middle;
+        letter-spacing: 0.03em;
+    }}
+    .ge-tagline {{
+        font-family: 'Manrope', sans-serif;
+        font-size: 0.82rem;
+        color: var(--ge-ink-soft);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-top: 3px;
+    }}
+
+    /* --- Sidebar brand mark --- */
+    .ge-sidebar-brand {{
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Fraunces', serif;
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--ge-forest);
+        margin-bottom: 2px;
+    }}
+
+    /* --- Kotak adaptif & info, retema hijau --- */
+    .adaptive-box {{
+        background-color: var(--ge-sage);
+        color: var(--ge-forest);
+        padding: 16px;
+        border-radius: 12px;
+        border-left: 5px solid var(--ge-leaf);
         margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    
-    .info-box {
-        background-color: var(--secondary-background-color); 
-        padding: 14px; 
-        border-radius: 10px; 
-        border-left: 4px solid #38bdf8; 
+        box-shadow: 0 2px 10px rgba(22,60,36,0.06);
+    }}
+    .info-box {{
+        background-color: #FFFFFF;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid var(--ge-sage-border);
+        border-left: 4px solid var(--ge-sky);
         margin-top: 15px;
         font-size: 0.9rem;
-        color: var(--text-color);
-    }
-    
-    /* 5. ANIMASI */
-    .fade-in {
-        animation: fadeIn 1.2s ease-in-out;
-    }
-    @keyframes fadeIn {
-        from {opacity: 0; transform: translateY(10px);}
-        to {opacity: 1; transform: translateY(0);}
-    }
+        color: var(--ge-forest);
+    }}
+
+    /* --- Tombol utama --- */
+    .stButton > button[kind="primary"] {{
+        background: linear-gradient(135deg, var(--ge-leaf), var(--ge-leaf-deep));
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+    }}
+
+    /* --- Metric --- */
+    [data-testid="stMetricValue"] {{
+        color: var(--ge-leaf-deep);
+        font-family: 'Fraunces', serif;
+    }}
+
+    /* --- Animasi --- */
+    .fade-in {{ animation: fadeIn 1.2s ease-in-out; }}
+    @keyframes fadeIn {{
+        from {{opacity: 0; transform: translateY(10px);}}
+        to {{opacity: 1; transform: translateY(0);}}
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -79,7 +177,7 @@ def load_data_and_model():
     try:
         df = pd.read_csv('dataset worldbank PKM fixed.csv', sep=';')
     except FileNotFoundError:
-        st.error("❌ File CSV gak ketemu! Pastikan 'dataset worldbank PKM fixed.csv' ada.")
+        st.error("File CSV gak ketemu! Pastikan 'dataset worldbank PKM fixed.csv' ada.")
         st.stop()
 
     # Cleaning Data (Tetap diperlukan untuk fit Scaler)
@@ -91,7 +189,7 @@ def load_data_and_model():
             try: return float(val)
             except: return np.nan
         else:
-            val_clean = re.sub(r'\.', '', val) 
+            val_clean = re.sub(r'\.', '', val)
             try:
                 angka = float(val_clean)
                 if angka > 100000000000: angka = angka / 1e12
@@ -102,21 +200,20 @@ def load_data_and_model():
     col_gdp = 'GDP per capita (current US$)'
     col_energy = 'Energy use (kg of oil equivalent per capita)'
     col_target = 'Renewable energy consumption (% of total final energy consumption)'
-    
+
     if 'Country Name' in df.columns: df['Country Name'] = df['Country Name'].ffill()
 
     if col_pop in df.columns: df[col_pop] = df[col_pop].apply(lambda x: bersihin_angka(x, False))
     if col_gdp in df.columns: df[col_gdp] = df[col_gdp].apply(lambda x: bersihin_angka(x, False))
     if col_energy in df.columns: df[col_energy] = df[col_energy].apply(lambda x: bersihin_angka(x, False))
     if col_target in df.columns: df[col_target] = df[col_target].apply(lambda x: bersihin_angka(x, True))
-    
+
     df_model = df.dropna(subset=[col_pop, col_gdp, col_energy, col_target])
 
     X = df_model[[col_pop, col_gdp, col_energy]]
     y = df_model[col_target]
 
     # --- B. FIT SCALER (PENTING!) ---
-    # Kita harus tetap bikin scaler dari data asli biar input user nanti skalanya pas
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
@@ -125,10 +222,8 @@ def load_data_and_model():
     try:
         with open('model_xgboost.pkl', 'rb') as file:
             model = pickle.load(file)
-        # st.toast("✅ Model Pre-trained berhasil dimuat!") # Optional: notif kecil
     except FileNotFoundError:
-        st.warning("⚠️ File 'model_xgboost.pkl' gak ketemu! Melatih model baru secara otomatis...")
-        # Fallback: Kalau file pkl gak ada, latih ulang (biar gak error)
+        st.warning("File 'model_xgboost.pkl' gak ketemu! Melatih model baru secara otomatis...")
         model = XGBRegressor(random_state=42, n_estimators=500, learning_rate=0.05, max_depth=7)
         model.fit(X_scaled, y)
     except Exception as e:
@@ -146,7 +241,8 @@ except Exception as e:
 # ==========================================
 # 4. SIDEBAR (PANEL KONTROL)
 # ==========================================
-st.sidebar.header("🎛️ Panel Kontrol")
+st.sidebar.markdown('<div class="ge-sidebar-brand">\U0001F33F GreenEconomy-AI</div>', unsafe_allow_html=True)
+st.sidebar.header("\U0001F39B\uFE0F Panel Kontrol")
 
 # --- PILIH NEGARA ---
 st.sidebar.subheader("1. Pilih Negara")
@@ -180,12 +276,12 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("2. Ubah Indikator")
 
-pop_input = st.sidebar.number_input("👥 Populasi", min_value=0.0, value=def_pop, step=100000.0, format="%f")
-gdp_input = st.sidebar.number_input("💰 GDP per Kapita (USD)", min_value=0.0, value=def_gdp, step=100.0, format="%.2f")
-energy_input = st.sidebar.number_input("⚡ Energy Use (kg of oil/kapita)", min_value=0.0, value=def_energy, step=10.0, format="%.2f")
+pop_input = st.sidebar.number_input("Populasi", min_value=0.0, value=def_pop, step=100000.0, format="%f")
+gdp_input = st.sidebar.number_input("GDP per Kapita (USD)", min_value=0.0, value=def_gdp, step=100.0, format="%.2f")
+energy_input = st.sidebar.number_input("Energy Use (kg of oil/kapita)", min_value=0.0, value=def_energy, step=10.0, format="%.2f")
 
 st.sidebar.markdown("---")
-btn_predict = st.sidebar.button("🚀 PREDIKSI SKENARIO", type="primary")
+btn_predict = st.sidebar.button("\U0001F680 PREDIKSI SKENARIO", type="primary")
 
 # ==========================================
 # 5. LOGIKA PROSES & AI
@@ -196,14 +292,12 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 if btn_predict:
-    # 1. Prediksi XGBoost (Pake Model .pkl tadi)
-    input_data = pd.DataFrame([[pop_input, gdp_input, energy_input]], 
+    input_data = pd.DataFrame([[pop_input, gdp_input, energy_input]],
                               columns=['Population total', 'GDP per capita (current US$)', 'Energy use (kg of oil equivalent per capita)'])
     input_scaled = scaler.transform(input_data)
     raw_prediction = model.predict(input_scaled)[0]
     result = max(0.0, min(100.0, float(raw_prediction)))
 
-    # 2. Analisis Awal AI
     ai_analysis = ""
     try:
         if "GROQ_API_KEY" in st.secrets:
@@ -223,8 +317,8 @@ if btn_predict:
             )
             ai_analysis = chat_completion.choices[0].message.content
         else:
-            ai_analysis = "⚠️ API Key Groq tidak ditemukan di st.secrets."
-            
+            ai_analysis = "API Key Groq tidak ditemukan di st.secrets."
+
     except Exception as e:
         ai_analysis = f"Gagal mengambil analisis AI: {e}"
 
@@ -241,30 +335,53 @@ if btn_predict:
 # ==========================================
 # 6. DASHBOARD UTAMA
 # ==========================================
-st.title("🌍 Sistem Cerdas Prediksi dan Analisis Kebijakan Transisi Energi Berbasis Data dengan TIM BEJO")
+st.markdown("""
+<div class="ge-header">
+    <div class="ge-logo-badge">
+        <svg width="54" height="54" viewBox="0 0 54 54" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="geRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#3FB873"/>
+                    <stop offset="100%" stop-color="#1F7A47"/>
+                </linearGradient>
+            </defs>
+            <circle cx="27" cy="27" r="26" fill="url(#geRing)"/>
+            <circle cx="27" cy="27" r="26" fill="none" stroke="#163C24" stroke-opacity="0.15" stroke-width="1"/>
+            <path d="M27 13 C36 17 41 26 36 35 C32 41 22 42 17 36 C13 31 14 21 21 16 C23 14.5 25 13.6 27 13 Z" fill="#FFFFFF"/>
+            <path d="M27 13 C23 21 20 28 19 36" stroke="#3FB873" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <circle cx="19" cy="36" r="2" fill="#2F8FBF"/>
+        </svg>
+    </div>
+    <div class="ge-wordmark">
+        <span class="ge-name">GreenEconomy<span class="ge-ai-tag">AI</span></span>
+        <span class="ge-tagline">Prediksi &amp; Strategi Transisi Energi Berkelanjutan</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown(f"Analisis untuk **{display_name}**.")
 
 st.markdown("""
     <div class="adaptive-box">
-        <b>📌 Catatan Analitis:</b> Hasil prediksi ini mengevaluasi dampak indikator ekonomi terhadap strategi transisi energi.
+        <b>Catatan Analitis:</b> Hasil prediksi ini mengevaluasi dampak indikator ekonomi terhadap strategi transisi energi.
     </div>
     """, unsafe_allow_html=True)
 
 # TAMPILKAN HASIL
 if st.session_state.prediction_state:
     data = st.session_state.prediction_state
-    
+
     st.markdown('<div class="fade-in">', unsafe_allow_html=True)
     col1, col2 = st.columns([1, 1.5], gap="large")
-    
+
     with col1:
-        st.info("📊 Hasil Prediksi Kuantitatif")
-        
+        st.info("Hasil Prediksi Kuantitatif")
+
         fig = go.Figure(data=[go.Pie(
             values=[data['result'], 100 - data['result']],
             labels=['Energi Terbarukan', 'Energi Non-Terbarukan (Fosil)'],
-            hole=0.65, 
-            marker=dict(colors=['#22c55e', '#334155']),
+            hole=0.65,
+            marker=dict(colors=['#2E9B5C', '#163C24']),
             textinfo='percent',
             textfont=dict(size=14),
             hoverinfo='label+percent'
@@ -280,24 +397,24 @@ if st.session_state.prediction_state:
         st.plotly_chart(fig, use_container_width=True)
 
         st.metric(label="Persentase Adopsi", value=f"{data['result']:.2f}%")
-        
+
         if data['result'] < 20: st.error("Status: RENDAH")
         elif data['result'] < 50: st.warning("Status: MENENGAH")
         else: st.success("Status: TINGGI")
-        
+
         st.markdown("""
         <div class="info-box">
-        <b>ℹ️ Penjelasan Konsep:</b><br>
-        Prediksi <b>% energi terbarukan</b> menunjukkan potensi energi bersih berdasarkan kondisi ekonomi 
+        <b>Penjelasan Konsep:</b><br>
+        Prediksi <b>% energi terbarukan</b> menunjukkan potensi energi bersih berdasarkan kondisi ekonomi
                     serta menggambarkan tingkat kesiapan negara tersebut dalam melakukan transisi menuju ekonomi hijau.
         </div>
         """, unsafe_allow_html=True)
 
     with col2:
-        st.success(f"🤖 Analisis Kebijakan ({data['name']})")
+        st.success(f"Analisis Kebijakan ({data['name']})")
         st.markdown(data['analysis'])
         st.markdown("---")
-        st.caption("🔍 Parameter Input:")
+        st.caption("Parameter Input:")
         st.code(f"Populasi: {data['pop']:,.0f} | GDP: US$ {data['gdp']:,.2f} | Energy: {data['energy']:,.2f}")
 
     st.markdown('</div>', unsafe_allow_html=True)
@@ -306,8 +423,8 @@ if st.session_state.prediction_state:
     # 7. FITUR CHAT LANJUTAN
     # ==========================================
     st.markdown("---")
-    st.subheader("💬 Asisten Kebijakan Interaktif")
-    
+    st.subheader("Asisten Kebijakan Interaktif")
+
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -341,5 +458,4 @@ if st.session_state.prediction_state:
                 msg_ph.error(f"Error: {e}")
 
 else:
-    st.info("👈 Pilih negara dan klik tombol 'PREDIKSI SKENARIO' untuk mulai.")
-    
+    st.info("Pilih negara dan klik tombol 'PREDIKSI SKENARIO' untuk mulai.")
