@@ -297,7 +297,7 @@ if btn_predict:
             """
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt_text}],
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
             )
             ai_analysis = chat_completion.choices[0].message.content
         else:
@@ -431,7 +431,7 @@ if st.session_state.prediction_state:
                     client = Groq(api_key=st.secrets["GROQ_API_KEY"])
                     res = client.chat.completions.create(
                         messages=[{"role": "user", "content": context_prompt}],
-                        model="llama-3.1-8b-instant",
+                        model="llama-3.3-70b-versatile",
                     )
                     full_res = res.choices[0].message.content
                     msg_ph.markdown(full_res)
