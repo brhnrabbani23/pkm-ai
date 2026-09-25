@@ -298,7 +298,6 @@ if btn_predict:
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt_text}],
                 model="openai/gpt-oss-120b",
-                max_completion_tokens=800
             )
             ai_analysis = chat_completion.choices[0].message.content
         else:
@@ -433,7 +432,6 @@ if st.session_state.prediction_state:
                     res = client.chat.completions.create(
                         messages=[{"role": "user", "content": context_prompt}],
                         model="openai/gpt-oss-120b",
-                        max_completion_tokens=800
                     )
                     full_res = res.choices[0].message.content
                     msg_ph.markdown(full_res)
